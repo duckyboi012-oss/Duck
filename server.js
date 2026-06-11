@@ -5,26 +5,32 @@ app.use(express.json());
 app.post('/ask', async (req, res) => {
     try {
         const { prompt } = req.body;
-        
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
+
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: {
-                "x-api-key": process.env.CLAUDE_API_KEY,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json"
+                "Authorization": "Bearer " + process.env.GROQ_API_KEY,
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "claude-sonnet-4-20250514",
-                max_tokens: 1000,
-                system: "You are a Roblox Luau expert. Write valid Luau code using correct Roblox APIs. When asked to write a script, output ONLY the code.",
-                messages: [{ role: "user", content: prompt }]
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a Roblox Luau expert. Write valid Luau code using correct Roblox APIs. When asked to write a script, output ONLY the code."
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ]
             })
         });
 
         const data = await response.json();
-        
-        if (data && data.content && data.content[0]) {
-            res.json({ reply: data.content[0].text });
+
+        if (data && data.choices && data.choices[0]) {
+            res.json({ reply: data.choices[0].message.content });
         } else {
             res.json({ reply: "Error: " + JSON.stringify(data) });
         }
